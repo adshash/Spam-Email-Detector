@@ -23,6 +23,24 @@ path = 'spamEmails.csv'
 
 data = pd.read_csv(path)
 
+def removePunctuation(Message):
+    temp = str.maketrans('', '', punctuationList)
+    return Message.translate(temp)
+
+
+def removeStopWords(Message):
+
+    ImportantWords = []
+
+    for word in str(Message).split():
+        word = word.lower()
+
+        if word not in stopWords:
+            ImportantWords.append(word)
+
+    output = " ".join(ImportantWords)
+    return output
+
 for index, row in data.iterrows():  # Changes the spam category to bool (1 or 0)
     if row['Category'] == 'spam':
         row['Category'] = 1
@@ -31,7 +49,7 @@ for index, row in data.iterrows():  # Changes the spam category to bool (1 or 0)
 
 data.rename(inplace=True, columns={'Category': 'Spam'})
 
-# print(data.shape)
+print(data.shape)
 sns.countplot(x='Spam', data=data)
 plt.show()  # Shows how much spam vs ham emails there are
 
@@ -45,4 +63,13 @@ plt.figure(figsize=(8, 6))
 sns.countplot(data=BalancedData, x='Spam')
 plt.title('Distribution of Ham and Spam Emails after Balancing Sample sizes')
 plt.xlabel('Message Types')
-plt.show()  # Completely equal
+plt.show()  # Completely equal split between spam data and ham data
+print(BalancedData)
+
+punctuationList = string.punctuation  # Creates a str with all punctuation
+BalancedData['Message'] = BalancedData['Message'].apply(lambda x: removePunctuation(x))
+
+stopWords = stopwords.words('english')
+
+BalancedData['Message'] = BalancedData['Message'].apply(lambda x: removeStopWords(x))
+print(BalancedData.head())  # prints first few entries
