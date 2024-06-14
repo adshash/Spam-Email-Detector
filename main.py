@@ -41,6 +41,23 @@ def removeStopWords(Message):
     output = " ".join(ImportantWords)
     return output
 
+
+def plotWordCloud(data, typ):
+    emailCorpus = ''.join(data['Message'])
+
+    plt.figure(figsize=(7, 7))
+
+    wc = WordCloud(background_color='black',
+                   max_words=100,
+                   width=800,
+                   height=400,
+                   collocations=False).generate(emailCorpus)
+    plt.imshow(wc, interpolation='bilinear')
+    plt.title(f'WordCloud for {typ} emails', fontsize=15)
+    plt.axis('off')
+    plt.show()
+
+
 for index, row in data.iterrows():  # Changes the spam category to bool (1 or 0)
     if row['Category'] == 'spam':
         row['Category'] = 1
@@ -70,6 +87,30 @@ punctuationList = string.punctuation  # Creates a str with all punctuation
 BalancedData['Message'] = BalancedData['Message'].apply(lambda x: removePunctuation(x))
 
 stopWords = stopwords.words('english')
-
 BalancedData['Message'] = BalancedData['Message'].apply(lambda x: removeStopWords(x))
 print(BalancedData.head())  # prints first few entries
+
+plotWordCloud(BalancedData[BalancedData['Spam'] == 0], typ='Non-Spam')
+plotWordCloud(BalancedData[BalancedData['Spam'] == 1], typ='Spam')
+
+train_X, test_X, train_Y, test_Y = train_test_split(BalancedData['Message'],
+                                                    BalancedData['Spam'],
+                                                    test_size=0.2,
+                                                    random_state=42)
+
+tokenizer = Tokenizer()  # init the tokenizer
+tokenizer.fit_on_texts(train_X)  # fits the tokeniser to the training X.
+
+train_sequences = tokenizer.texts_to_sequences(train_X)  # creates a sequence of tokens for the training data
+test_sequences = tokenizer.texts_to_sequences(test_X)  # does same for test
+
+max_len = 100  # maximum sequence length
+train_sequences = pad_sequences(train_sequences,
+                                maxlen=max_len,
+                                padding='post',  # zeros are added as padding
+                                truncating='post')  # sequences longer than max_length are truncated
+test_sequences = pad_sequences(test_sequences,
+                               maxlen=max_len,
+                               padding='post',
+                               truncating='post')
+
