@@ -73,8 +73,8 @@ for index, row in data.iterrows():  # Changes the spam category to bool (1 or 0)
 data.rename(inplace=True, columns={'Category': 'Spam'})
 
 print(data.shape)
-# sns.countplot(x='Spam', data=data)
-#plt.show()  # Shows how much spam vs ham emails there are
+sns.countplot(x='Spam', data=data)
+plt.show()  # Shows how much spam vs ham emails there are
 
 HamMsg = data[data.Spam == 0]
 SpamMsg = data[data.Spam == 1]
@@ -84,11 +84,11 @@ if len(SpamMsg) > len(HamMsg):
     SpamMsg = SpamMsg.sample(n=len(HamMsg), random_state=42)
 
 BalancedData = pd.concat([HamMsg, SpamMsg])
-# plt.figure(figsize=(8, 6))
-#sns.countplot(data=BalancedData, x='Spam')
-# plt.title('Distribution of Ham and Spam Emails after Balancing Sample sizes')
-# plt.xlabel('Message Types')
-# #plt.show()  # Completely equal split between spam data and ham data
+plt.figure(figsize=(8, 6))
+sns.countplot(data=BalancedData, x='Spam')
+plt.title('Distribution of Ham and Spam Emails after Balancing Sample sizes')
+plt.xlabel('Message Types')
+#plt.show()  # Completely equal split between spam data and ham data
 print(BalancedData)
 
 punctuationList = string.punctuation  # Creates a str with all punctuation
@@ -100,8 +100,8 @@ BalancedData['Message'] = BalancedData['Message'].apply(lambda x: removeStopWord
 BalancedData['Message'] = BalancedData['Message'].apply(lambda x: normalize_text(x))
 print(BalancedData.head())  # prints first few entries
 
-# plotWordCloud(BalancedData[BalancedData['Spam'] == 0], typ='Non-Spam')
-# plotWordCloud(BalancedData[BalancedData['Spam'] == 1], typ='Spam')
+plotWordCloud(BalancedData[BalancedData['Spam'] == 0], typ='Non-Spam')
+plotWordCloud(BalancedData[BalancedData['Spam'] == 1], typ='Spam')
 
 train_X, test_X, train_Y, test_Y = train_test_split(BalancedData['Message'],
                                                     BalancedData['Spam'],
