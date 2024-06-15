@@ -8,7 +8,7 @@ The project is structured as follows:
 
 - `spamEmails.csv`: CSV file containing the email data with columns for `Category` (spam/ham) and `Message`.
 - `README.md`: This document explaining the project and its components.
-- `email_spam_classification.py`: Python script containing the code for data preprocessing, model building, training, and evaluation.
+- `main.py`: Python script containing the code for data preprocessing, model building, training, and evaluation.
 
 ## Requirements
 
@@ -68,10 +68,10 @@ To run the code:
 
 2. Install the required libraries as mentioned in the Requirements section.
 
-3. Execute the `email_spam_classification.py` script:
+3. Execute the `main.py` script:
 
    ```bash
-   python email_spam_classification.py
+   python main.py
    ```
 
 4. The script will load the data, preprocess it, build the LSTM model, train it, evaluate its performance, and display relevant visualizations.
