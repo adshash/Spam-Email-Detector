@@ -152,7 +152,7 @@ model.add(tf.keras.layers.Dense(1, activation='sigmoid'))  # Output layer to pro
 model.compile(loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),  # passed through activation func before output
               metrics=['accuracy'],  # Proportion of correct classification to incorrect
               optimizer='adam')  # Adaptive Moment Estimation
-model.summary()
+
 
 es = EarlyStopping(patience=2,  # Stops early if there is no improvement in learning after 2 epochs
                    monitor='val_loss',  # validation loss is monitored
@@ -172,8 +172,8 @@ history = model.fit(train_sequences, train_Y,
 
 # Evaluate the model
 test_loss, test_accuracy = model.evaluate(test_sequences, test_Y)
-print('Test Loss :', test_loss)
-print('Test Accuracy :', test_accuracy)
+print(f'Test Loss :, {test_loss * 100}%')
+print(f'Test Accuracy :, {test_accuracy * 100}%')
 
 
 plt.plot(history.history['accuracy'], label='Training Accuracy')
@@ -183,3 +183,5 @@ plt.ylabel('Accuracy')
 plt.xlabel('Epoch')
 plt.legend()
 plt.show()
+
+model.summary()
