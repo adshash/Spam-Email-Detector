@@ -12,6 +12,7 @@ from wordcloud import WordCloud
 
 # Importing libraries necessary for Model Building and Training
 import tensorflow as tf
+from tensorflow.keras.layers import Embedding, LSTM, Dense
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
@@ -83,7 +84,7 @@ if len(HamMsg) > len(SpamMsg):
 if len(SpamMsg) > len(HamMsg):
     SpamMsg = SpamMsg.sample(n=len(HamMsg), random_state=42)
 
-BalancedData = pd.concat([HamMsg, SpamMsg])
+BalancedData = pd.concat([HamMsg, SpamMsg], ignore_index=True)
 plt.figure(figsize=(8, 6))
 sns.countplot(data=BalancedData, x='Spam')
 plt.title('Distribution of Ham and Spam Emails after Balancing Sample sizes')
@@ -100,35 +101,41 @@ BalancedData['Message'] = BalancedData['Message'].apply(lambda x: removeStopWord
 BalancedData['Message'] = BalancedData['Message'].apply(lambda x: normalize_text(x))
 print(BalancedData.head())  # prints first few entries
 
+BalancedData.drop_duplicates(subset='Message', keep='first', inplace=True)
+
+
 plotWordCloud(BalancedData[BalancedData['Spam'] == 0], typ='Non-Spam')
 plotWordCloud(BalancedData[BalancedData['Spam'] == 1], typ='Spam')
+
+X = BalancedData.Message
+print(X)
+tokenizer = Tokenizer()  # init the tokenizer
+tokenizer.fit_on_texts(X)  # fits the tokeniser to the training X.
+word_index = tokenizer.word_index
 
 train_X, test_X, train_Y, test_Y = train_test_split(BalancedData['Message'],
                                                     BalancedData['Spam'],
                                                     test_size=0.2,
                                                     random_state=42)
 
-tokenizer = Tokenizer()  # init the tokenizer
-tokenizer.fit_on_texts(train_X)  # fits the tokeniser to the training X.
-
 train_sequences = tokenizer.texts_to_sequences(train_X)  # creates a sequence of tokens for the training data
 test_sequences = tokenizer.texts_to_sequences(test_X)  # does same for test
 
-max_len = 100  # maximum sequence length
+max_len = 50  # maximum sequence length
 train_sequences = pad_sequences(train_sequences,
                                 maxlen=max_len,
-                                padding='post',  # zeros are added as padding
+                                padding='pre',  # zeros are added as padding
                                 truncating='post')  # sequences longer than max_length are truncated
 test_sequences = pad_sequences(test_sequences,
                                maxlen=max_len,
-                               padding='post',
+                               padding='pre',
                                truncating='post')
 
-train_sequences = np.array(train_sequences, dtype=np.int32)
-test_sequences = np.array(test_sequences, dtype=np.int32)
-train_Y = np.array(train_Y, dtype=np.int32)
-test_Y = np.array(test_Y, dtype=np.int32)
-
+train_sequences = np.array(train_sequences, dtype=np.float32)
+test_sequences = np.array(test_sequences, dtype=np.float32)
+train_Y = np.array(train_Y, dtype=np.float32)
+test_Y = np.array(test_Y, dtype=np.float32)
+print(train_sequences, test_sequences)
 
 model = tf.keras.models.Sequential()  # Builds the model
 # Convert input sequences of word indices into dense vectors of fixed size.
@@ -137,17 +144,18 @@ model.add(tf.keras.layers.Embedding(input_dim=len(tokenizer.word_index) + 1,
                                     input_length=max_len))
 model.add(tf.keras.layers.LSTM(16))  # capture temporal dependencies in the input sequences. 16 dimension output
 model.add(tf.keras.layers.Dense(32, activation='relu'))  # Fully connected layer for processing after the LSTM
+model.add(tf.keras.layers.Dense(64, activation='relu'))  # Adding another Dense layer with 64 units
+model.add(tf.keras.layers.Dropout(0.2))  # Adding Dropout with a dropout rate of 20%
 model.add(tf.keras.layers.Dense(1, activation='sigmoid'))  # Output layer to produce the final classification.
 
 
-model.compile(loss=tf.keras.losses.BinaryCrossentropy(),  # passed through activation func before output
+model.compile(loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),  # passed through activation func before output
               metrics=['accuracy'],  # Proportion of correct classification to incorrect
               optimizer='adam')  # Adaptive Moment Estimation
-model.build(input_shape=(None, max_len))
 model.summary()
 
-es = EarlyStopping(patience=2,  # Stops early if there is no improvement in learning after 3 epochs
-                   monitor='val_loss',  # validation accuracy is monitored
+es = EarlyStopping(patience=2,  # Stops early if there is no improvement in learning after 2 epochs
+                   monitor='val_loss',  # validation loss is monitored
                    restore_best_weights=True)
 
 lr = ReduceLROnPlateau(patience=3,
